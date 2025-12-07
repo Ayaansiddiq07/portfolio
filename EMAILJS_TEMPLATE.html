@@ -1,0 +1,205 @@
+<!-- 
+AESTHETIC EMAILJS EMAIL TEMPLATE
+Copy this HTML into your EmailJS template editor
+
+Steps:
+1. Go to https://www.emailjs.com/dashboard
+2. Click "Email Templates"
+3. Create a new template
+4. Copy the HTML below into the template content
+5. Use these variables in your template:
+   - {{from_name}} - Sender's name
+   - {{from_email}} - Sender's email
+   - {{message}} - Message content
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .header {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            padding: 40px 30px;
+            text-align: center;
+            border-bottom: 3px solid #ffffff;
+        }
+        .header h1 {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #888888;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 16px;
+            color: #333333;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .greeting strong {
+            color: #000000;
+            font-weight: 600;
+        }
+        .message-box {
+            background: #f8f8f8;
+            border-left: 4px solid #000000;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 4px;
+            font-size: 15px;
+            color: #555555;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .sender-info {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border: 1px solid #e0e0e0;
+        }
+        .sender-info p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #666666;
+        }
+        .sender-info strong {
+            color: #000000;
+            font-weight: 600;
+        }
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 30px 0;
+        }
+        .footer {
+            background: #f8f8f8;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer p {
+            font-size: 13px;
+            color: #888888;
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+        .footer a {
+            color: #000000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .social-links {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #000000;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #000000;
+            color: #ffffff;
+            padding: 12px 30px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 20px;
+            letter-spacing: 1px;
+        }
+        .cta-button:hover {
+            background: #333333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>AYAAN</h1>
+            <p>Portfolio Contact Message</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Greeting -->
+            <div class="greeting">
+                Hi <strong>Ayaan</strong>,<br><br>
+                You have received a new message from your portfolio website. Here are the details:
+            </div>
+
+            <!-- Sender Information -->
+            <div class="sender-info">
+                <p><strong>From:</strong> {{from_name}}</p>
+                <p><strong>Email:</strong> <a href="mailto:{{from_email}}">{{from_email}}</a></p>
+            </div>
+
+            <!-- Message -->
+            <div class="divider"></div>
+            <p style="font-size: 13px; color: #888888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Message</p>
+            <div class="message-box">{{message}}</div>
+
+            <!-- Call to Action -->
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="mailto:{{from_email}}" class="cta-button">Reply to {{from_name}}</a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>This message was sent through your portfolio contact form.</p>
+            <p>
+                <a href="https://ayaansiddique.vercel.app">Visit Portfolio</a> • 
+                <a href="https://github.com/Ayaansiddiq07">GitHub</a>
+            </p>
+            <div class="social-links">
+                <a href="https://github.com/Ayaansiddiq07">GitHub</a>
+                <a href="https://linkedin.com/in/ayaan-siddique">LinkedIn</a>
+                <a href="https://ayaansiddique.vercel.app">Portfolio</a>
+            </div>
+            <p style="margin-top: 20px; font-size: 12px; color: #aaaaaa;">
+                © 2025 Ayaan Siddique. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
