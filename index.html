@@ -9,6 +9,8 @@
     <meta name="author" content="Ayaan Siddique">
     <meta name="theme-color" content="#000000">
     <title>Ayaan Siddique | Portfolio</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
 
     <!-- SEO & Social Media -->
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
@@ -1063,7 +1065,12 @@
                 const tl = gsap.timeline();
 
                 // 1. Fade out globe after 2.5s
-                tl.to(globeCanvas, { opacity: 0, duration: 1, delay: 2.5 })
+                tl.to(globeCanvas, {
+                    opacity: 0,
+                    duration: 1,
+                    delay: 2.5,
+                    onComplete: () => { globeAnimating = false; } // Performance Optimization: Stop rendering
+                })
                     .to(intro, { opacity: 0, duration: 1, onComplete: () => { intro.style.display = 'none'; } }, "-=0.5")
 
                     // 2. Trigger Shatter & Realign (Particles Appear FIRST)
