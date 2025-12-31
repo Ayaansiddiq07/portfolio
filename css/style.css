@@ -14,6 +14,14 @@
     --glass-blur: 10px;
 }
 
+/* Mobile Performance Overrides */
+@media (max-width: 768px) {
+    :root {
+        --glass-blur: 5px;
+        /* Reduce blur for performance */
+    }
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -25,8 +33,13 @@ body {
     color: var(--text-color);
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
-    cursor: none;
-    /* Custom cursor */
+    /* Custom cursor only on desktop */
+}
+
+@media (min-width: 769px) {
+    body {
+        cursor: none;
+    }
 }
 
 /* Custom Scrollbar */
@@ -59,9 +72,11 @@ body {
     border-radius: 50%;
     pointer-events: none;
     z-index: 9999;
-    transform: translate(-50%, -50%);
+    /* transform is handled by JS now */
     transition: width 0.3s, height 0.3s, background-color 0.3s;
+    /* Only animate size/color content */
     mix-blend-mode: difference;
+    will-change: transform;
 }
 
 #cursor.hovered {
@@ -79,6 +94,21 @@ body {
     width: 100%;
     height: 100vh;
     z-index: -1;
+}
+
+/* Film Grain Texture */
+.noise-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999;
+    /* On top of everything */
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
 }
 
 /* Typography & Glitch Effect */
@@ -190,13 +220,8 @@ nav {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Hero Section */
-.hero-title {
-    font-size: clamp(3rem, 10vw, 8rem);
-    line-height: 0.9;
-    font-weight: 700;
-    text-transform: uppercase;
-}
+/* Hero Section - Main Title (Phase 3: Massive) */
+/* See Phase 3 section for sizing */
 
 /* About Section */
 #about {
@@ -222,11 +247,26 @@ nav {
     height: 100%;
     object-fit: cover;
     opacity: 0.7;
-    will-change: transform, opacity;
-    /* Hardware acceleration */
+    will-change: opacity;
+    /* Removed transform */
     transition: opacity 0.5s ease;
     mix-blend-mode: luminosity;
     /* Cool cyber effect that allows color overlay to pop */
+}
+
+/* Remove expensive blend modes on mobile */
+@media (max-width: 768px) {
+    .video-bg {
+        mix-blend-mode: normal;
+        /* Normal blend mode is faster */
+        opacity: 0.5;
+        /* Adjust opacity since luminosity is gone */
+    }
+
+    .video-bg-container::after {
+        mix-blend-mode: overlay;
+        /* Less expensive than color-dodge */
+    }
 }
 
 /* Cheap, Fast Color Tint via Overlay */
@@ -264,6 +304,19 @@ nav {
 .skills-container {
     transform-style: preserve-3d;
     perspective: 1000px;
+}
+
+/* Disable 3D tilt on mobile for performance and usability */
+@media (max-width: 768px) {
+    .skills-container {
+        perspective: none;
+        transform-style: flat;
+    }
+
+    .skill-card {
+        transform: none !important;
+        transition: border-color 0.3s ease;
+    }
 }
 
 .skill-card {
@@ -310,4 +363,143 @@ textarea:focus {
 
 .border-cyan {
     border-color: var(--accent-cyan);
+}
+
+/* =========================================
+   PHASE 3: ULTRA-PREMIUM DESIGN TWEAKS
+   ========================================= */
+
+/* Marquee Animation */
+.animate-marquee {
+    animation: marquee 20s linear infinite;
+    will-change: transform;
+}
+
+@keyframes marquee {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+/* Stroke Text Support */
+.stroke-text {
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+    color: transparent;
+}
+
+.stroke-text:hover {
+    -webkit-text-stroke: 1px #22d3ee;
+    opacity: 1;
+    color: transparent;
+    /* Keep transparent fill for stroke effect */
+}
+
+/* Magnetic Interaction Base */
+.magnetic-btn,
+.magnetic-icon {
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform;
+}
+
+/* Spotlight Card Effect */
+.spotlight-card {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Radial Gradient Overlay handled by JS mouse move, 
+   but we can set up the container here */
+.spotlight-card::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    border-radius: inherit;
+    background: radial-gradient(400px circle at var(--mouse-x, 0) var(--mouse-y, 0),
+            rgba(34, 211, 238, 0.4),
+            transparent 40%);
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+.spotlight-card:hover::after {
+    opacity: 1;
+}
+
+/* Glitch Text Size Override for massive impact */
+.hero-title {
+    font-size: clamp(3rem, 15vw, 12rem);
+    line-height: 0.9;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* =========================================
+   PHASE 4: MOBILE REFINEMENT
+   ========================================= */
+
+@media (max-width: 768px) {
+
+    /* 1. Typography Control */
+    .hero-title {
+        font-size: 3rem !important;
+        /* Force smaller size on mobile */
+        line-height: 1.1;
+    }
+
+    footer h2 {
+        font-size: 15vw !important;
+        /* Scale footer text nicely */
+    }
+
+    .animate-marquee {
+        font-size: 4rem !important;
+        /* Smaller marquee */
+    }
+
+    /* 2. Disable Magnetic Effect on Touch */
+    .magnetic-btn,
+    .magnetic-icon {
+        transform: none !important;
+        transition: transform 0.2s ease;
+        /* Simple tap feedback */
+    }
+
+    .magnetic-btn:active,
+    .magnetic-icon:active {
+        transform: scale(0.95) !important;
+    }
+
+    /* 3. Auto-Glow or Scroll-Based Glow for Cards */
+    /* Instead of hover, we give a subtle permanent glow so it's visible */
+    .spotlight-card::after {
+        opacity: 0.3 !important;
+        /* Always visible but subtle */
+        background: radial-gradient(300px circle at 50% 50%,
+                rgba(34, 211, 238, 0.2),
+                transparent 60%) !important;
+        transition: opacity 0.5s;
+    }
+
+    /* Pulse effect to suggest interactivity */
+    @keyframes subtlePulse {
+
+        0%,
+        100% {
+            opacity: 0.2;
+        }
+
+        50% {
+            opacity: 0.4;
+        }
+    }
+
+    .spotlight-card::after {
+        animation: subtlePulse 4s infinite ease-in-out;
+    }
 }

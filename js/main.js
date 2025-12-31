@@ -4,12 +4,14 @@ import * as THREE from 'three';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import emailjs from '@emailjs/browser';
+import Lenis from '@studio-freight/lenis';
 
 // Register GSAP Plugin
 gsap.registerPlugin(ScrollTrigger);
 
 // Wait for DOM
 document.addEventListener('DOMContentLoaded', () => {
+    initLenis();
     initCursor();
     initThreeJS();
     initScrollAnimations();
@@ -17,18 +19,69 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProjects();
     initContactForm();
     initMobileMenu();
+    initPhase3(); // Ultra-Premium Features
 });
+
+// --- 0. Smooth Scroll (Lenis) ---
+function initLenis() {
+    const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        direction: 'vertical',
+        gestureDirection: 'vertical',
+        smooth: true,
+        smoothTouch: false, // Default is false, which is good for perf
+        touchMultiplier: 2,
+    });
+
+    // Connect Lenis to GSAP ScrollTrigger
+    lenis.on('scroll', ScrollTrigger.update);
+
+    gsap.ticker.add((time) => {
+        lenis.raf(time * 1000);
+    });
+
+    gsap.ticker.lagSmoothing(0);
+}
 
 // --- 1. Custom Cursor ---
 function initCursor() {
+    // Disable on touch devices
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+
     const cursor = document.createElement('div');
     cursor.id = 'cursor';
     document.body.appendChild(cursor);
 
+    // Optimize: Use requestAnimationFrame for smoother cursor
+    let mouseX = 0, mouseY = 0;
+    let cursorX = 0, cursorY = 0;
+
     document.addEventListener('mousemove', (e) => {
-        cursor.style.left = e.clientX + 'px';
-        cursor.style.top = e.clientY + 'px';
+        mouseX = e.clientX;
+        mouseY = e.clientY;
     });
+
+    // Smooth lerp
+    function animateCursor() {
+        const dx = mouseX - cursorX;
+        const dy = mouseY - cursorY;
+
+        cursorX += dx * 0.2; // Smoothness factor
+        cursorY += dy * 0.2;
+
+        cursor.style.transform = `translate(${cursorX}px, ${cursorY}px)`;
+        // Fixed: Use transform instead of top/left for performance (no layout thrashing)
+        // Note: CSS #cursor needs update to remove top/left dependency if we use translate globally, 
+        // but for now let's just use fixed position + transform. 
+        // Actually, let's keep it simple: direct assign but use transform.
+        cursor.style.left = '0px';
+        cursor.style.top = '0px';
+        cursor.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`; // Hardware accelerated
+
+        requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
 
     const hoverTargets = document.querySelectorAll('a, button, .project-card, input, textarea');
     hoverTargets.forEach(el => {
@@ -52,9 +105,9 @@ function initThreeJS() {
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 18;
 
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false }); // Disable AA for perf
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Cap at 1.5x for performance
 
     // --- SHADER CODE (Liquid Glass / Ultra Smooth) ---
     const vertexShader = `
@@ -156,34 +209,46 @@ function initThreeJS() {
         varying vec3 vNormal;
 
         void main() {
-            // "Perfect" Clean Palette
-            vec3 colorDeep = vec3(0.0, 0.05, 0.2);   // Clear Deep Blue
-            vec3 colorMid = vec3(0.0, 0.5, 1.0);     // Pure Blue
-            vec3 colorHighlight = vec3(0.2, 0.8, 1.0); // Cyan Highlight
+            // "Updated" Premium Palette with Iridescence
+            vec3 colorDeep = vec3(0.0, 0.02, 0.1);   // Darker Void Blue
+            vec3 colorMid = vec3(0.02, 0.2, 0.8);    // Rich Cobalt
+            vec3 colorHighlight = vec3(0.0, 0.8, 1.0); // Electric Cyan
             
             // Smooth mix
-            float mixVal = smoothstep(-1.0, 1.0, vDisplacement);
+            float mixVal = smoothstep(-0.8, 0.8, vDisplacement);
             
-            vec3 finalColor = mix(colorDeep, colorMid, mixVal);
+            vec3 baseColor = mix(colorDeep, colorMid, mixVal);
             
-            // Glossy Highlights instead of "Glow/Burn"
+            // Iridescent/Chromatic Aberration Fake
+            // Shift colors slightly based on normal angle for "pearlescent" look
+            float fresnel = dot(vNormal, vec3(0.0, 0.0, 1.0));
+            fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
+            fresnel = pow(fresnel, 2.0);
+
+            vec3 iridescent = vec3(fresnel * 0.5, fresnel * 0.2, fresnel * 0.8); // Purple/Blue tint
+            
             // Specular-like reflection based on view
             float viewDir = dot(normalize(vNormal), vec3(0.0, 0.0, 1.0));
             float rim = 1.0 - max(viewDir, 0.0);
+            rim = pow(rim, 3.0); 
             
-            // Sharp, thin rim light for "Glass" look
-            rim = pow(rim, 4.0); 
-            finalColor += vec3(0.4, 0.9, 1.0) * rim * 1.5;
+            vec3 finalColor = baseColor + iridescent * 0.3;
+            
+            // Add sharp rim light
+            finalColor += vec3(0.6, 0.9, 1.0) * rim * 1.2;
             
             // Internal glow
-            finalColor += colorHighlight * 0.1;
+            finalColor += colorHighlight * 0.1 * (vDisplacement + 0.5);
 
-            gl_FragColor = vec4(finalColor, 0.85); // Transparent
+            gl_FragColor = vec4(finalColor, 0.9); // Slightly more opaque
         }
     `;
 
     // Geometry - Increase resolution for "Perfect" smoothness
-    const geometry = new THREE.SphereGeometry(6, 128, 128);
+    // Optimization: Reduced segments from 128 to 64 for mobile performance
+    const isMobile = window.innerWidth < 768;
+    const segments = isMobile ? 48 : 96; // 48 is decent for mobile, 96 for desktop
+    const geometry = new THREE.SphereGeometry(6, segments, segments);
 
     // Material
     const material = new THREE.ShaderMaterial({
@@ -203,6 +268,10 @@ function initThreeJS() {
     let mouseX = 0;
     let mouseY = 0;
 
+    // Lerp variables for smooth rotation
+    let targetRotationX = 0;
+    let targetRotationY = 0;
+
     document.addEventListener('mousemove', (event) => {
         mouseX = (event.clientX - window.innerWidth / 2) * 0.0005;
         mouseY = (event.clientY - window.innerHeight / 2) * 0.0005;
@@ -218,10 +287,15 @@ function initThreeJS() {
         // Update Shader Uniforms
         material.uniforms.uTime.value = elapsedTime;
 
+        // Smooth Rotation Lerp
+        targetRotationY = mouseX * 0.5;
+        targetRotationX = mouseY * 0.5;
+
+        sphere.rotation.z += (targetRotationY - sphere.rotation.z) * 0.05; // Smooth ease
+        sphere.rotation.x += (targetRotationX - sphere.rotation.x) * 0.05;
+
         // Subtle total rotation
-        sphere.rotation.y = elapsedTime * 0.1;
-        sphere.rotation.x = mouseY * 0.5;
-        sphere.rotation.z = mouseX * 0.5;
+        sphere.rotation.y = elapsedTime * 0.15; // Slightly faster for more "life"
 
         renderer.render(scene, camera);
     }
@@ -309,23 +383,45 @@ function initVideoBackground() {
 // --- 4. Scroll Animations (GSAP) ---
 function initScrollAnimations() {
 
+    // General Section Reveal
     const sections = document.querySelectorAll('.reveal-section');
     sections.forEach(section => {
         gsap.fromTo(section,
-            { opacity: 0 }, // Removing y: 50 for smoother, simpler fade
+            { opacity: 0, y: 30 },
             {
                 opacity: 1,
-                duration: 1.2, // Slightly longer duration
-                ease: 'power2.out', // Softer ease
+                y: 0,
+                duration: 1,
+                ease: 'power3.out',
                 scrollTrigger: {
                     trigger: section,
-                    start: 'top 85%', // Trigger slightly earlier
-                    toggleActions: 'play none none reverse' // Re-play on scroll back? Or just play once. 'play none none none' is safer for "smoothness" so it doesn't choppy reverse.
-                    // User said "not smooth", choppy reversing is a common cause. Let's make it play once.
+                    start: 'top 85%',
+                    toggleActions: 'play none none reverse'
                 }
             }
         );
     });
+
+    // Specific Skills Stagger
+    // We target the skills container to stagger its children (columns or cards)
+    const skillGroups = document.querySelectorAll('.skills-container .space-y-6');
+    if (skillGroups.length > 0) {
+        gsap.fromTo(skillGroups,
+            { opacity: 0, y: 40 },
+            {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                stagger: 0.2, // Stagger columns
+                ease: 'back.out(1.2)',
+                scrollTrigger: {
+                    trigger: '.skills-container',
+                    start: 'top 80%',
+                    toggleActions: 'play none none reverse'
+                }
+            }
+        );
+    }
 
     // Glitch Text Trigger
     const glitchText = document.querySelector('.hero-title');
@@ -464,4 +560,80 @@ function initContactForm() {
             btn.disabled = false;
         }
     });
+}
+
+// --- 7. Phase 3: Ultra-Premium Features (Magnetic & Spotlight) ---
+function initPhase3() {
+
+    // A. Magnetic Buttons
+    const magneticBtns = document.querySelectorAll('.magnetic-btn, .magnetic-icon');
+
+    magneticBtns.forEach(btn => {
+        btn.addEventListener('mousemove', (e) => {
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+
+            // Move button towards mouse (Magnetic Pull)
+            gsap.to(btn, {
+                x: x * 0.3, // Pull strength
+                y: y * 0.3,
+                rotate: x * 0.05, // Subtle tilt
+                duration: 0.5,
+                ease: 'power3.out'
+            });
+
+            // Move inner content slightly more for parallax depth (if exists)
+            const inner = btn.querySelector('span, svg');
+            if (inner) {
+                gsap.to(inner, {
+                    x: x * 0.1,
+                    y: y * 0.1,
+                    duration: 0.5,
+                    ease: 'power3.out'
+                });
+            }
+        });
+
+        btn.addEventListener('mouseleave', () => {
+            gsap.to(btn, { x: 0, y: 0, rotate: 0, duration: 1, ease: 'elastic.out(1, 0.3)' });
+            const inner = btn.querySelector('span, svg');
+            if (inner) {
+                gsap.to(inner, { x: 0, y: 0, duration: 1, ease: 'elastic.out(1, 0.3)' });
+            }
+        });
+    });
+
+    // B. Spotlight Cards (Project & Skills) - Add class via JS if not present
+    const cards = document.querySelectorAll('.project-card, .skill-card');
+    cards.forEach(card => card.classList.add('spotlight-card'));
+
+    document.addEventListener('mousemove', (e) => {
+        cards.forEach(card => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Only update if near/inside to save perf
+            // Using logic to check visibility could save resources, but direct setter is fast enough
+            if (rect.top < window.innerHeight && rect.bottom > 0) {
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            }
+        });
+    });
+
+    // C. Parallax Footer Text
+    const footerText = document.querySelector('footer h2');
+    if (footerText) {
+        gsap.to(footerText, {
+            y: -50,
+            scrollTrigger: {
+                trigger: 'footer',
+                start: 'top bottom',
+                end: 'bottom bottom',
+                scrub: 1
+            }
+        });
+    }
 }
