@@ -186,6 +186,8 @@ function initCursor() {
 
 // --- 2. Advanced Three.js Background (Blue Lava Shader) ---
 function initThreeJS() {
+    // PERFORMANCE OPTIMIZATION: Disable Three.js shader on mobile
+    if (window.innerWidth < 768) return;
 
     const canvas = document.getElementById('bg-canvas') || document.createElement('canvas');
     if (!canvas.id) {
@@ -762,6 +764,8 @@ function initContactForm() {
 
 // --- 7. Phase 3: Ultra-Premium Features (Magnetic & Spotlight) ---
 function initPhase3() {
+    // Check if device supports hover (i.e., is not a touch device)
+    if (!window.matchMedia('(hover: hover)').matches) return;
 
     // A. Magnetic Buttons - Enhanced
     const magneticBtns = document.querySelectorAll('.magnetic-btn, .magnetic-icon');
