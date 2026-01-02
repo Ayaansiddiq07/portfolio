@@ -33,7 +33,9 @@ body {
     color: var(--text-color);
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
-    /* Custom cursor only on desktop */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 @media (min-width: 769px) {
@@ -72,17 +74,19 @@ body {
     border-radius: 50%;
     pointer-events: none;
     z-index: 9999;
-    /* transform is handled by JS now */
-    transition: width 0.3s, height 0.3s, background-color 0.3s;
-    /* Only animate size/color content */
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 0.2s ease,
+        border-color 0.2s ease;
     mix-blend-mode: difference;
-    will-change: transform;
+    will-change: transform, width, height;
+    contain: layout style;
 }
 
 #cursor.hovered {
     width: 50px;
     height: 50px;
-    background-color: rgba(0, 243, 255, 0.1);
+    background-color: rgba(0, 243, 255, 0.15);
     border-color: var(--accent-purple);
 }
 
@@ -109,6 +113,89 @@ body {
     opacity: 0.05;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
     mix-blend-mode: overlay;
+}
+
+/* =========================================
+   PROFILE PHOTO - HERO SECTION
+   ========================================= */
+
+.profile-photo-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile-photo-wrapper {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@media (min-width: 768px) {
+    .profile-photo-wrapper {
+        width: 280px;
+        height: 280px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .profile-photo-wrapper {
+        width: 320px;
+        height: 320px;
+    }
+}
+
+.profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+    border: 4px solid rgba(255, 255, 255, 0.15);
+    transition: transform 0.4s ease, border-color 0.3s ease;
+}
+
+.profile-photo-wrapper:hover .profile-photo {
+    transform: scale(1.03);
+    border-color: var(--accent-cyan);
+}
+
+/* Static Gradient Ring */
+.profile-ring {
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+    z-index: 1;
+    opacity: 0.8;
+}
+
+.profile-ring::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: var(--bg-color);
+}
+
+/* Subtle Static Glow */
+.profile-glow {
+    position: absolute;
+    inset: -30px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+            rgba(0, 243, 255, 0.2) 0%,
+            rgba(188, 19, 254, 0.15) 50%,
+            transparent 70%);
+    z-index: 0;
+    filter: blur(20px);
+    opacity: 0.7;
 }
 
 /* Typography & Glitch Effect */
@@ -208,11 +295,18 @@ h4 {
 
 /* Glassmorphism Classes */
 .glass-panel {
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    /* Increased blur */
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.glass-panel:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Navbar */
@@ -320,25 +414,33 @@ nav {
 }
 
 .skill-card {
-    transition: transform 0.1s;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
     transform-style: preserve-3d;
+    will-change: transform, box-shadow;
+    backface-visibility: hidden;
 }
 
 .skill-card:hover {
     border-color: var(--accent-cyan);
-    box-shadow: 0 0 15px var(--accent-cyan);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
 }
 
 /* Projects */
 .project-card {
-    transition: all 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.3s ease,
+        box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    will-change: transform, box-shadow;
+    backface-visibility: hidden;
 }
 
 .project-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px) scale(1.02);
     border-color: var(--accent-purple);
-    box-shadow: 0 0 20px rgba(188, 19, 254, 0.2);
+    box-shadow: 0 15px 40px rgba(188, 19, 254, 0.25);
 }
 
 /* Contact Form */
@@ -385,14 +487,14 @@ textarea:focus {
     }
 }
 
-/* Stroke Text Support */
+/* Stroke Text Support - Fixed for visibility */
 .stroke-text {
-    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.5);
     color: transparent;
 }
 
 .stroke-text:hover {
-    -webkit-text-stroke: 1px #22d3ee;
+    -webkit-text-stroke: 2px #22d3ee;
     opacity: 1;
     color: transparent;
     /* Keep transparent fill for stroke effect */
@@ -439,6 +541,16 @@ textarea:focus {
     text-transform: uppercase;
 }
 
+/* Project Card Link - Make entire card clickable */
+.project-card {
+    cursor: pointer;
+}
+
+.project-card a {
+    position: relative;
+    z-index: 10;
+}
+
 /* =========================================
    PHASE 4: MOBILE REFINEMENT
    ========================================= */
@@ -447,19 +559,61 @@ textarea:focus {
 
     /* 1. Typography Control */
     .hero-title {
-        font-size: 3rem !important;
+        font-size: 2.5rem !important;
         /* Force smaller size on mobile */
         line-height: 1.1;
     }
 
+    /* Fixed: Footer typography and layout for mobile */
     footer h2 {
-        font-size: 15vw !important;
-        /* Scale footer text nicely */
+        font-size: 10vw !important;
+        /* Smaller scale for mobile */
+        word-break: break-word;
+        line-height: 1 !important;
     }
 
+    footer .flex-col.md\\:flex-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 2rem !important;
+    }
+
+    footer .magnetic-btn {
+        font-size: 1rem !important;
+        flex-wrap: wrap;
+        word-break: break-all;
+    }
+
+    footer .flex.gap-8 {
+        flex-wrap: wrap;
+        gap: 1rem !important;
+        justify-content: center;
+    }
+
+    footer .magnetic-icon {
+        width: 48px !important;
+        height: 48px !important;
+    }
+
+    footer .mt-20 {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+
+    /* Fixed: Marquee text visibility */
     .animate-marquee {
-        font-size: 4rem !important;
+        font-size: 3rem !important;
         /* Smaller marquee */
+    }
+
+    .stroke-text {
+        -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.6) !important;
+        opacity: 0.4 !important;
+    }
+
+    .marquee-content {
+        gap: 2rem !important;
     }
 
     /* 2. Disable Magnetic Effect on Touch */
@@ -501,5 +655,15 @@ textarea:focus {
 
     .spotlight-card::after {
         animation: subtlePulse 4s infinite ease-in-out;
+    }
+
+    /* Mobile project cards - ensure links are clickable */
+    .project-card {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fix contact section padding on mobile */
+    #contact .glass-panel {
+        padding: 1.5rem !important;
     }
 }

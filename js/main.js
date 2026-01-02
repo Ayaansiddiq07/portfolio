@@ -3,14 +3,29 @@ import '../css/style.css';
 import * as THREE from 'three';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 import emailjs from '@emailjs/browser';
 import Lenis from '@studio-freight/lenis';
 
-// Register GSAP Plugin
-gsap.registerPlugin(ScrollTrigger);
+// Register GSAP Plugins
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+// Force Scroll to Top on Page Load/Reload
+if (history.scrollRestoration) {
+    history.scrollRestoration = 'manual';
+}
+
+// Aggressive Scroll Reset Strategy
+window.onbeforeunload = function () {
+    window.scrollTo(0, 0);
+};
 
 // Wait for DOM
 document.addEventListener('DOMContentLoaded', () => {
+    // Immediate reset
+    window.scrollTo(0, 0);
+
+    // Initialize all features
     initLenis();
     initCursor();
     initThreeJS();
@@ -20,19 +35,98 @@ document.addEventListener('DOMContentLoaded', () => {
     initContactForm();
     initMobileMenu();
     initPhase3(); // Ultra-Premium Features
+    initSmoothNavigation(); // Smooth anchor links
+
+    // Hide page loader after everything is initialized
+    hidePageLoader();
 });
 
-// --- 0. Smooth Scroll (Lenis) ---
+// --- Page Loader ---
+function hidePageLoader() {
+    const loader = document.getElementById('page-loader');
+    if (!loader) return;
+
+    // Wait a minimum time for perceived loading, then hide
+    const minLoadTime = 800; // ms
+    const loadStart = performance.now ? performance.now() : Date.now();
+
+    // Check if video is ready (if exists)
+    const video = document.getElementById('about-video');
+
+    const hideLoader = () => {
+        const elapsed = (performance.now ? performance.now() : Date.now()) - loadStart;
+        const remainingTime = Math.max(0, minLoadTime - elapsed);
+
+        setTimeout(() => {
+            loader.classList.add('hidden');
+            // Remove from DOM after transition
+            setTimeout(() => loader.remove(), 500);
+        }, remainingTime);
+    };
+
+    if (video && video.readyState < 3) {
+        // Video not ready, wait for it
+        video.addEventListener('canplaythrough', hideLoader, { once: true });
+        // Fallback in case video takes too long
+        setTimeout(hideLoader, 3000);
+    } else {
+        // No video or already loaded
+        hideLoader();
+    }
+}
+
+// --- Smooth Navigation for Anchor Links ---
+function initSmoothNavigation() {
+    const navLinks = document.querySelectorAll('a[href^="#"]');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            const href = link.getAttribute('href');
+            if (href === '#') return;
+
+            const target = document.querySelector(href);
+            if (target) {
+                e.preventDefault();
+
+                // Smooth scroll to target
+                gsap.to(window, {
+                    scrollTo: { y: target, offsetY: 80 },
+                    duration: 1,
+                    ease: 'power2.inOut'
+                });
+            }
+        });
+    });
+}
+
+// --- 0. Smooth Scroll (Lenis) - Tuned for "Premium" Feel ---
 function initLenis() {
+    // Force manual scroll restoration
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+
+    // Initial scroll reset
+    window.scrollTo(0, 0);
+
     const lenis = new Lenis({
-        duration: 1.2,
+        duration: 1.5,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         direction: 'vertical',
         gestureDirection: 'vertical',
         smooth: true,
-        smoothTouch: false, // Default is false, which is good for perf
+        smoothTouch: false,
         touchMultiplier: 2,
     });
+
+    // Validated 100% force scroll to top logic
+    // We do this immediately and also after a micro-task to beat any browser restoration
+    lenis.scrollTo(0, { immediate: true });
+
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+        lenis.scrollTo(0, { immediate: true });
+    }, 50);
 
     // Connect Lenis to GSAP ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update);
@@ -105,9 +199,9 @@ function initThreeJS() {
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 18;
 
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false }); // Disable AA for perf
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Cap at 1.5x for performance
+    renderer.setPixelRatio(1); // Fixed at 1x for smooth scrolling
 
     // --- SHADER CODE (Liquid Glass / Ultra Smooth) ---
     const vertexShader = `
@@ -244,10 +338,9 @@ function initThreeJS() {
         }
     `;
 
-    // Geometry - Increase resolution for "Perfect" smoothness
-    // Optimization: Reduced segments from 128 to 64 for mobile performance
+    // Geometry - Optimized for performance
     const isMobile = window.innerWidth < 768;
-    const segments = isMobile ? 48 : 96; // 48 is decent for mobile, 96 for desktop
+    const segments = isMobile ? 32 : 64; // Reduced for better performance
     const geometry = new THREE.SphereGeometry(6, segments, segments);
 
     // Material
@@ -313,26 +406,72 @@ function initMobileMenu() {
     const btn = document.getElementById('mobile-menu-btn');
     const menu = document.getElementById('mobile-menu');
     const links = document.querySelectorAll('.mobile-link');
+    const footer = document.querySelector('.mobile-footer');
+    const body = document.body;
 
     if (!btn || !menu) return;
 
-    btn.addEventListener('click', () => {
-        const isOpen = menu.classList.contains('hidden'); // Check if currently hidden
-        if (isOpen) {
-            menu.classList.remove('hidden');
-            gsap.fromTo(menu, { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.3 });
-            btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-white" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>';
-        } else {
-            gsap.to(menu, { opacity: 0, y: -20, duration: 0.3, onComplete: () => menu.classList.add('hidden') });
-            btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-white" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>';
+    const openMenu = () => {
+        menu.classList.remove('hidden');
+        menu.classList.add('flex'); // Ensure flex functionality
+        body.style.overflow = 'hidden'; // Lock scroll
+
+        // Stagger links
+        const tl = gsap.timeline();
+
+        // Simplified entrance: Just fade in the solid background container
+        tl.fromTo(menu,
+            { opacity: 0 },
+            { opacity: 1, duration: 0.3, ease: 'power2.out' }
+        );
+
+        // Slide text up
+        tl.fromTo(links,
+            { y: 30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.4, stagger: 0.1, ease: 'expo.out' },
+            "-=0.1" // Slight overlap
+        );
+
+        if (footer) {
+            tl.fromTo(footer,
+                { y: 20, opacity: 0 },
+                { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' },
+                "-=0.2"
+            );
         }
-    });
+
+        btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-white" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>';
+        menu.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeMenu = () => {
+        // Blur focus to prevent ARIA error
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+
+        body.style.overflow = '';
+
+        gsap.to(menu, {
+            opacity: 0,
+            duration: 0.3,
+            onComplete: () => {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+                menu.setAttribute('aria-hidden', 'true');
+            }
+        });
+    };
+
+    // Open Listener
+    btn.addEventListener('click', openMenu);
+
+    // Close Button Listener
+    const closeBtn = document.getElementById('mobile-menu-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
 
     links.forEach(link => {
-        link.addEventListener('click', () => {
-            gsap.to(menu, { opacity: 0, y: -20, duration: 0.3, onComplete: () => menu.classList.add('hidden') });
-            btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-white" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>';
-        });
+        link.addEventListener('click', closeMenu);
     });
 }
 
@@ -380,19 +519,19 @@ function initVideoBackground() {
     // video.addEventListener('ended', () => { hasPausedForName = false; });
 }
 
-// --- 4. Scroll Animations (GSAP) ---
+// --- 4. Scroll Animations (GSAP) - Tuned Easings ---
 function initScrollAnimations() {
 
-    // General Section Reveal
-    const sections = document.querySelectorAll('.reveal-section');
+    // General Section Reveal (exclude skills section items to avoid conflict)
+    const sections = document.querySelectorAll('.reveal-section:not(.skills-container .reveal-section)');
     sections.forEach(section => {
         gsap.fromTo(section,
-            { opacity: 0, y: 30 },
+            { opacity: 0, y: 50 },
             {
                 opacity: 1,
                 y: 0,
-                duration: 1,
-                ease: 'power3.out',
+                duration: 1.2,
+                ease: 'expo.out',
                 scrollTrigger: {
                     trigger: section,
                     start: 'top 85%',
@@ -402,20 +541,18 @@ function initScrollAnimations() {
         );
     });
 
-    // Specific Skills Stagger
-    // We target the skills container to stagger its children (columns or cards)
-    const skillGroups = document.querySelectorAll('.skills-container .space-y-6');
-    if (skillGroups.length > 0) {
-        gsap.fromTo(skillGroups,
-            { opacity: 0, y: 40 },
+    // Skills Section - Animate heading first
+    const skillsHeading = document.querySelector('#skills h2');
+    if (skillsHeading) {
+        gsap.fromTo(skillsHeading,
+            { opacity: 0, x: 50 },
             {
                 opacity: 1,
-                y: 0,
-                duration: 0.8,
-                stagger: 0.2, // Stagger columns
-                ease: 'back.out(1.2)',
+                x: 0,
+                duration: 1,
+                ease: 'expo.out',
                 scrollTrigger: {
-                    trigger: '.skills-container',
+                    trigger: '#skills',
                     start: 'top 80%',
                     toggleActions: 'play none none reverse'
                 }
@@ -423,16 +560,59 @@ function initScrollAnimations() {
         );
     }
 
-    // Glitch Text Trigger
+    // Skills Section - Animate each column with stagger
+    const skillColumns = document.querySelectorAll('.skills-container .skill-column');
+    if (skillColumns.length > 0) {
+        gsap.fromTo(skillColumns,
+            { opacity: 0, y: 80 },
+            {
+                opacity: 1,
+                y: 0,
+                duration: 1,
+                stagger: 0.15,
+                ease: 'expo.out',
+                scrollTrigger: {
+                    trigger: '.skills-container',
+                    start: 'top 75%',
+                    toggleActions: 'play none none reverse'
+                }
+            }
+        );
+    }
+
+    // Individual Skill Cards - Stagger within each column
+    const skillCards = document.querySelectorAll('.skill-card');
+    if (skillCards.length > 0) {
+        gsap.fromTo(skillCards,
+            { opacity: 0, scale: 0.9 },
+            {
+                opacity: 1,
+                scale: 1,
+                duration: 0.6,
+                stagger: 0.08,
+                ease: 'back.out(1.4)',
+                scrollTrigger: {
+                    trigger: '.skills-container',
+                    start: 'top 70%',
+                    toggleActions: 'play none none reverse'
+                }
+            }
+        );
+    }
+
+    // Glitch Text Trigger (Hero)
     const glitchText = document.querySelector('.hero-title');
     if (glitchText) {
-        gsap.to(glitchText, {
-            opacity: 1,
-            y: 0,
-            duration: 1.5,
-            ease: 'expo.out',
-            delay: 0.5
-        });
+        gsap.fromTo(glitchText,
+            { opacity: 0, y: 30 },
+            {
+                opacity: 1,
+                y: 0,
+                duration: 1.5,
+                ease: 'expo.out',
+                delay: 0.5
+            }
+        );
     }
 }
 
@@ -481,17 +661,35 @@ function renderProjects(page) {
         const card = document.createElement('div');
         // Initial state for animation
         card.className = 'project-card glass-panel p-6 rounded-xl relative overflow-hidden group opacity-0 translate-y-4';
+        card.setAttribute('data-url', repo.html_url);
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
         card.innerHTML = `
             <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <h3 class="text-xl font-bold mb-2 text-white group-hover:text-cyan-400 transition-colors">${repo.name}</h3>
             <p class="text-gray-400 text-sm mb-4 line-clamp-3">${repo.description || 'No description available.'}</p>
             <div class="flex justify-between items-center mt-auto">
                 <span class="text-xs uppercase tracking-wider text-gray-500 border border-gray-800 px-2 py-1 rounded">${repo.language || 'Code'}</span>
-                <a href="${repo.html_url}" target="_blank" class="text-cyan-400 hover:text-white transition-colors">
+                <span class="text-cyan-400 group-hover:text-white transition-colors inline-flex items-center gap-2">
+                    <span class="text-xs uppercase tracking-wider">View</span>
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
-                </a>
+                </span>
             </div>
         `;
+
+        // Make entire card clickable
+        card.addEventListener('click', (e) => {
+            window.open(repo.html_url, '_blank', 'noopener,noreferrer');
+        });
+
+        // Keyboard accessibility
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                window.open(repo.html_url, '_blank', 'noopener,noreferrer');
+            }
+        });
+
         grid.appendChild(card);
 
         // GSAP Fade In with stagger
@@ -565,7 +763,7 @@ function initContactForm() {
 // --- 7. Phase 3: Ultra-Premium Features (Magnetic & Spotlight) ---
 function initPhase3() {
 
-    // A. Magnetic Buttons
+    // A. Magnetic Buttons - Enhanced
     const magneticBtns = document.querySelectorAll('.magnetic-btn, .magnetic-icon');
 
     magneticBtns.forEach(btn => {
@@ -574,32 +772,33 @@ function initPhase3() {
             const x = e.clientX - rect.left - rect.width / 2;
             const y = e.clientY - rect.top - rect.height / 2;
 
-            // Move button towards mouse (Magnetic Pull)
+            // Move button towards mouse (Stronger Magnetic Pull)
             gsap.to(btn, {
-                x: x * 0.3, // Pull strength
-                y: y * 0.3,
-                rotate: x * 0.05, // Subtle tilt
-                duration: 0.5,
+                x: x * 0.5, // Increased from 0.3
+                y: y * 0.5,
+                rotate: x * 0.1, // More tilt
+                duration: 0.8,
                 ease: 'power3.out'
             });
 
-            // Move inner content slightly more for parallax depth (if exists)
-            const inner = btn.querySelector('span, svg');
+            // Move inner content slightly more for parallax depth
+            const inner = btn.querySelector('span, svg, .relative');
             if (inner) {
                 gsap.to(inner, {
-                    x: x * 0.1,
-                    y: y * 0.1,
-                    duration: 0.5,
+                    x: x * 0.3,
+                    y: y * 0.3,
+                    duration: 0.8,
                     ease: 'power3.out'
                 });
             }
         });
 
         btn.addEventListener('mouseleave', () => {
-            gsap.to(btn, { x: 0, y: 0, rotate: 0, duration: 1, ease: 'elastic.out(1, 0.3)' });
-            const inner = btn.querySelector('span, svg');
+            // Elastic return for "bouncy" premium feel
+            gsap.to(btn, { x: 0, y: 0, rotate: 0, duration: 1.2, ease: 'elastic.out(1, 0.3)' });
+            const inner = btn.querySelector('span, svg, .relative');
             if (inner) {
-                gsap.to(inner, { x: 0, y: 0, duration: 1, ease: 'elastic.out(1, 0.3)' });
+                gsap.to(inner, { x: 0, y: 0, duration: 1.2, ease: 'elastic.out(1, 0.3)' });
             }
         });
     });
