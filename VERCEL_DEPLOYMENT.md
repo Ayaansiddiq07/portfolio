@@ -31,17 +31,17 @@ Even though EmailJS Public Key is meant to be public, you can still protect it:
 2. Click "Settings" → "Environment Variables"
 3. Add these variables:
    ```
-   NEXT_PUBLIC_EMAILJS_SERVICE_ID=service_o0382pf
-   NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=template_kdldom7
-   NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=9aDFHA4whx9CYlrG4
+   NEXT_PUBLIC_EMAILJS_SERVICE_ID=your_service_id
+   NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=your_template_id
+   NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_public_key
    ```
 
 4. Update `index.html` to use them:
    ```javascript
    const EMAILJS_CONFIG = {
-       serviceID: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || 'service_o0382pf',
-       templateID: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || 'template_kdldom7',
-       publicKey: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || '9aDFHA4whx9CYlrG4'
+       serviceID: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || 'your_service_id',
+       templateID: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || 'your_template_id',
+       publicKey: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || 'your_public_key'
    };
    ```
 
@@ -79,9 +79,9 @@ Go to https://www.emailjs.com/dashboard and:
 
 **Vercel URL**: https://your-username.vercel.app (after deployment)
 
-**EmailJS Service**: service_o0382pf
-**EmailJS Template**: template_kdldom7
-**EmailJS Public Key**: 9aDFHA4whx9CYlrG4
+**EmailJS Service**: your_service_id
+**EmailJS Template**: your_template_id
+**EmailJS Public Key**: your_public_key
 
 ## ✅ CURRENT STATUS
 

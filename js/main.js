@@ -739,15 +739,15 @@ function initContactForm() {
 
         // Mock send (or implement EmailJS)
         try {
-            // Using imported emailjs
-            // emailjs.init("9aDFHA4whx9CYlrG4"); // Public Key - explicitly init if needed or rely on sendForm
+            const serviceID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+            const templateID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+            const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
-            // Note: emailjs.sendForm automatically initializes if key is passed or if initialized before
-            // We'll auto-init here just in case, or use the object
-            // Actually, best practice with module:
-            // emailjs.init(...);
+            if (!serviceID || !templateID || !publicKey) {
+                throw new Error("EmailJS credentials missing in .env");
+            }
 
-            await emailjs.sendForm('service_o0382pf', 'template_kdldom7', form, '9aDFHA4whx9CYlrG4');
+            await emailjs.sendForm(serviceID, templateID, form, publicKey);
             alert('Message Transmitted Successfully');
             form.reset();
         } catch (err) {
